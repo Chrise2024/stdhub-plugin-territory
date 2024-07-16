@@ -1,0 +1,23 @@
+# The meta info of your plugin. Edit it!
+plugin:
+
+  # The name of your plugin.
+  # Will be displayed on enable, and be used as the plugin namespace.
+  # All the plugin data will be stored at `plugins/[name]/`.
+  name: stdPlugin-territory
+
+  # The description of your plugin.
+  # Will be displayed in the plugin store (in the future).
+  description: A Territory Plugin for BDS
+
+  # The version of your plugin.
+  # Remember to edit this when you are going to publish a release.
+  version: 0.1.0
+
+# The target Minecraft version of your plugin.
+# In other words, the version of Minecraft which you expect your plugin to run on.
+# Only stable releases (e.g. 1.20.0, 1.21.0) are permitted.
+# After modifying this, please remember to execute `npm run update-dependency`
+# and then execute `npm install` (or other package managers).
+# Finally, FULLY CHECK YOUR CODE to see if there is any reference failure!
+targetMinecraftVersion: 1.21.2

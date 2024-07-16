@@ -1,0 +1,32 @@
+{
+  "name": "plugin-territory",
+  "version": "0.1.0",
+  "description": "A bedrock-stdhub plugin",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "node build.js build",
+    "debug": "node --env-file=.env build.js debug",
+    "update-dependency": "node build.js update-dependency"
+  },
+  "devDependencies": {
+    "@stylistic/eslint-plugin-js": "^2.3.0",
+    "@types/node": "^20.14.8",
+    "@typescript-eslint/eslint-plugin": "^7.14.1",
+    "@typescript-eslint/parser": "^7.14.1",
+    "esbuild": "^0.23.0",
+    "eslint": "^8.57.0",
+    "eslint-plugin-minecraft-linting": "^1.2.1",
+    "fs-extra": "^11.2.0",
+    "jszip": "^3.10.1",
+    "typescript": "^5.5.2",
+    "yaml": "^2.4.5"
+  },
+  "dependencies": {
+    "@minecraft/math": "^1.1.0",
+    "@minecraft/server": "^1.12.0-beta.1.21.1-stable",
+    "@minecraft/server-ui": "^1.1.0",
+    "@minecraft/vanilla-data": "^1.21.1",
+    "stdhub-plugin-api": "^0.5.0"
+  }
+}
