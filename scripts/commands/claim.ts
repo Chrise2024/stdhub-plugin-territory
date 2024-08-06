@@ -35,6 +35,7 @@ export const cmdClaimTerritory = new Command().addHandler(
 
 async function CTHandleByRPos(player:Player){
     api.log('Claiming territory for player: ' + player.name);
+    console.log(await api.getXuidByName("ChriseDai114514"));
     const chunkLand:ChunkLand = new ChunkLand(ChunkLand.transformChunkPosition({x:Math.floor(player.location.x),z:Math.floor(player.location.z),dim:player.dimension.id}));
     if (ChunkManager.isClaimed(chunkLand)){
         world.sendMessage('This territory is already claimed');

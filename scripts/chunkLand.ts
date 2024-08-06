@@ -1,4 +1,4 @@
-import { Block, ExplosionBeforeEvent, Player, PlayerBreakBlockBeforeEvent, PlayerBreakBlockBeforeEventSignal, PlayerInteractWithBlockBeforeEvent, world } from "@minecraft/server";
+import { world } from "@minecraft/server";
 import { api } from "./main";
 
 export const propertiesList = [
@@ -67,34 +67,29 @@ export class ChunkLand {
         return {x:this.ChunkPositionX,z:this.ChunkPositionZ, dim:this.ChunkDimension}
     }
 }
+var chunksMap:Map<string,saveEntrySchema> = new Map();
+var ClaimedChunks:Array<claimedChunkSchema> = [];
 
 export class ChunkManager{
-    public constructor(data:Map<string,saveEntrySchema>,claimed:Array<claimedChunkSchema>){
-        ChunkManager.chunksMap = data;
-        ChunkManager.ClaimedChunks = claimed;
-    }
     static async init(){
-        world.beforeEvents.explosion.subscribe(ExplosionCallback);
-        world.beforeEvents.playerBreakBlock.subscribe(playerBreakCallback);
-        world.beforeEvents.playerInteractWithBlock.subscribe(playerUseCallback);
+        console.log(1111);
         const datRaw = await api.readData('territory.json');
-        let data:Map<string,saveEntrySchema> = new Map(Object.entries(datRaw));
+        chunksMap = new Map(Object.entries(JSON.parse(datRaw)));
         let claimed:Array<claimedChunkSchema> = [];
-        for (let i of data.keys()){
-            let chunkPosList = data.get(i)?.chunks || [];
+        for (let i of chunksMap.keys()){
+            let chunkPosList = chunksMap.get(i)?.chunks || [];
             let newList:Array<claimedChunkSchema> = [];
             for (let j in chunkPosList){
                 newList.push({position:chunkPosList[j],ownerXuid:i});
             }
             claimed = claimed.concat(newList);
         }
-        return new ChunkManager(data,claimed);
+        ClaimedChunks = claimed;
+        return new ChunkManager();
     }
-    private static chunksMap:Map<string,saveEntrySchema> = new Map();
-    private static ClaimedChunks:Array<claimedChunkSchema> = [];
     static isClaimed(chunk:ChunkLand){
         const curPos:chunkPosSchema = chunk.getChunkPosition();
-        ChunkManager.ClaimedChunks.forEach((cChunk:claimedChunkSchema)=>{
+        ClaimedChunks.forEach((cChunk:claimedChunkSchema)=>{
             if (cChunk.position.x === curPos.x && cChunk.position.z === curPos.z && cChunk.position.dim === curPos.dim){
                 return true;
             }
@@ -108,9 +103,9 @@ export class ChunkManager{
             world.sendMessage(`§c玩家 ${ownerName} 不存在`);
             return false;
         }
-        if (ChunkManager.chunksMap.has(Xuid)){
+        if (chunksMap.has(Xuid)){
             let index:number = -1;
-            let curEntry = ChunkManager.chunksMap.get(Xuid)?.chunks || []
+            let curEntry = chunksMap.get(Xuid)?.chunks || []
             for (let i = 0;i < curEntry.length;i++){
                 if (curEntry[i].x === cPos.x && curEntry[i].z === cPos.z && curEntry[i].dim === cPos.dim){
                     index = i;
@@ -118,8 +113,8 @@ export class ChunkManager{
                 }
             }
             if (index === -1){
-                ChunkManager.chunksMap.get(Xuid)?.chunks.push(cPos);
-                ChunkManager.ClaimedChunks.push({position:cPos,ownerXuid:Xuid});
+                chunksMap.get(Xuid)?.chunks.push(cPos);
+                ClaimedChunks.push({position:cPos,ownerXuid:Xuid});
                 world.sendMessage(`§a玩家 ${ownerName} 获取了区块 ${cPos.x},${cPos.z},${cPos.dim}`);
                 return true;
             }
@@ -129,8 +124,8 @@ export class ChunkManager{
             }
         }
         else{
-            ChunkManager.chunksMap.set(Xuid,defaultSave);
-            ChunkManager.chunksMap.get(Xuid)?.chunks.push(chunk.getChunkPosition());
+            chunksMap.set(Xuid,defaultSave);
+            chunksMap.get(Xuid)?.chunks.push(chunk.getChunkPosition());
             world.sendMessage(`§a玩家 ${ownerName} 获取了区块 ${cPos.x},${cPos.z},${cPos.dim}`);
             return true;
         }
@@ -142,9 +137,9 @@ export class ChunkManager{
             world.sendMessage(`§c玩家 ${ownerName} 不存在`);
             return false;
         }
-        if (ChunkManager.chunksMap.has(Xuid)){
+        if (chunksMap.has(Xuid)){
             let index:number = -1;
-            let curEntry = ChunkManager.chunksMap.get(Xuid)?.chunks || [];
+            let curEntry = chunksMap.get(Xuid)?.chunks || [];
             for (let i = 0;i < curEntry.length;i++){
                 if (curEntry[i].x === cPos.x && curEntry[i].z === cPos.z && curEntry[i].dim === cPos.dim){
                     index = i;
@@ -152,16 +147,16 @@ export class ChunkManager{
                 }
             }
             if (index === -1){
-                ChunkManager.chunksMap.get(Xuid)?.chunks.splice(index,1);
+                chunksMap.get(Xuid)?.chunks.splice(index,1);
                 world.sendMessage(`§a玩家 ${ownerName} 删除了区块 ${cPos.x},${cPos.z},${cPos.dim}`);
                 let index1:number = -1;
-                for (let i = 0;i < ChunkManager.ClaimedChunks.length;i++){
-                    if (ChunkManager.ClaimedChunks[i].position.x === cPos.x && ChunkManager.ClaimedChunks[i].position.z === cPos.z && ChunkManager.ClaimedChunks[i].position.dim === cPos.dim){
+                for (let i = 0;i < ClaimedChunks.length;i++){
+                    if (ClaimedChunks[i].position.x === cPos.x && ClaimedChunks[i].position.z === cPos.z && ClaimedChunks[i].position.dim === cPos.dim){
                         index1 = i;
                         break;
                     }
                 }
-                ChunkManager.ClaimedChunks.splice(index1,1);
+                ClaimedChunks.splice(index1,1);
                 return true;
             }
             else{
@@ -170,7 +165,7 @@ export class ChunkManager{
             }
         }
         else{
-            ChunkManager.chunksMap.set(Xuid,defaultSave);
+            chunksMap.set(Xuid,defaultSave);
             world.sendMessage(`§c玩家 ${ownerName} 没有这个区块`);
             return false;
         }
@@ -183,7 +178,7 @@ export class ChunkManager{
             return [];
         }
         else{
-            return ChunkManager.chunksMap.get(Xuid)?.chunks || [];
+            return chunksMap.get(Xuid)?.chunks || [];
         }
     }
     static async hasChunk(ownerName:string,chunk:ChunkLand){
@@ -194,7 +189,7 @@ export class ChunkManager{
         }
         else{
             const curPos = chunk.getChunkPosition();
-            ChunkManager.chunksMap.get(ownerName)?.chunks.forEach((value)=>{
+            chunksMap.get(ownerName)?.chunks.forEach((value)=>{
                 if (value.x === curPos.x && value.z === curPos.z && value.dim === curPos.dim){
                     return true;
                 }
@@ -204,20 +199,20 @@ export class ChunkManager{
     }
     static async getClaimedChunk(chunk:ChunkLand){
         const curPos:chunkPosSchema = chunk.getChunkPosition();
-        for (let i in ChunkManager.ClaimedChunks){
-            if (ChunkManager.ClaimedChunks[i].position.x === curPos.x && ChunkManager.ClaimedChunks[i].position.z === curPos.z && ChunkManager.ClaimedChunks[i].position.dim === curPos.dim){
-                return ChunkManager.ClaimedChunks[i];
+        for (let i in ClaimedChunks){
+            if (ClaimedChunks[i].position.x === curPos.x && ClaimedChunks[i].position.z === curPos.z && ClaimedChunks[i].position.dim === curPos.dim){
+                return ClaimedChunks[i];
             }
         }
         return defaultClaimedChunk;
     }
     static async getPropertiesByXuid(ownerXuid:string){
-        const curEntry = ChunkManager.chunksMap.get(ownerXuid) || defaultSave;
+        const curEntry = chunksMap.get(ownerXuid) || defaultSave;
         return curEntry.properties;
     }
     static async save(){
         world.sendMessage('Saving');
-        await api.writeData('territory.json',Object.fromEntries(ChunkManager.chunksMap));
+        await api.writeData('territory.json',Object.fromEntries(chunksMap));
     }
     static async config(ownerName:string,entry:string,status:boolean) {
         const Xuid = await api.getXuidByName(ownerName) || '';
@@ -226,7 +221,7 @@ export class ChunkManager{
             return false;
         }
         else{
-            const curEntry:saveEntrySchema = ChunkManager.chunksMap.get(Xuid) || defaultSave;
+            const curEntry:saveEntrySchema = chunksMap.get(Xuid) || defaultSave;
             if (entry === 'ExplosionProtection'){
                 curEntry.properties.ExplosionProtection = status;
                 world.sendMessage(`§a玩家 ${ownerName} ${status?'开启':'关闭'}了爆炸保护`);
@@ -254,7 +249,7 @@ export class ChunkManager{
         }
     }
 }
-
+/*
 async function ExplosionCallback(event:ExplosionBeforeEvent){
     const curEntity = event.source;
     if (curEntity){
@@ -302,3 +297,4 @@ async function playerUseCallback(event:PlayerInteractWithBlockBeforeEvent){
         event.cancel = false;
     }
 }
+*/
